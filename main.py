@@ -11,54 +11,64 @@ RAINFOREST_API_KEY = os.getenv("RAINFOREST_API_KEY")
 
 bot = telegram.Bot(token=TOKEN)
 
-def get_product_info(asin):
-    url = "https://api.rainforestapi.com/request"
-    params = {
-        "api_key": RAINFOREST_API_KEY,
-        "type": "product",
-        "amazon_domain": "amazon.es",
-        "asin": asin
-    }
+SEARCH_TERMS = [
+    "monitor gaming", "ssd barato", "portátil oferta", "ratón inalámbrico", "teclado mecánico",
+    "auriculares bluetooth", "powerbank", "tarjeta gráfica", "ofertas tecnología", "smartwatch barato"
+]
+
+def search_amazon_products():
+    results = []
     headers = {"Content-Type": "application/json"}
+    for term in SEARCH_TERMS:
+        params = {
+            "api_key": RAINFOREST_API_KEY,
+            "type": "search",
+            "amazon_domain": "amazon.es",
+            "search_term": term
+        }
+        try:
+            response = requests.get("https://api.rainforestapi.com/request", headers=headers, params=params)
+            data = response.json()
 
-    try:
-        response = requests.get(url, params=params, headers=headers, timeout=10)
-        data = response.json()
+            if "search_results" in data and data["search_results"]:
+                first = data["search_results"][0]
+                title = first.get("title", "Sin título")
+                price_info = first.get("price", {})
+                price = price_info.get("value", None)
+                link = first.get("link", "#")
 
-        title = data.get("product", {}).get("title")
-        price = data.get("product", {}).get("buybox_winner", {}).get("price", {}).get("value")
+                if title and price:
+                    results.append((title, price, link))
+                else:
+                    print(f"❌ No se encontró precio o título para término: {term}")
+            else:
+                print(f"❌ No se encontraron resultados para: {term}")
 
-        if title and price:
-            return title, price
-        else:
-            print(f"❌ No se encontró precio o título para {asin}")
-            return None
-    except Exception as e:
-        print(f"❌ Error al obtener info para {asin}: {e}")
-        return None
+        except Exception as e:
+            print(f"❌ Error buscando '{term}': {e}")
+    return results
 
 def notify_channel(products):
-    for title, price, asin in products:
-        message = f"🔥 OFERTA: {title}\n💰 Precio: {price} €\n🔗 Enlace: https://www.amazon.es/dp/{asin}"
+    for title, price, url in products:
+        message = f"🔥 OFERTA DETECTADA:
+📦 {title}
+💰 {price} €
+🔗 {url}"
         try:
             bot.send_message(chat_id=CHANNEL_ID, text=message)
         except Exception as e:
             print(f"❌ Error al enviar mensaje: {e}")
 
 if __name__ == "__main__":
-    print("\n📦 BOT_TOKEN:", "CARGADO" if TOKEN else "FALTA")
+    print("📦 BOT_TOKEN:", "CARGADO" if TOKEN else "FALTA")
     print("📦 CHANNEL_ID:", CHANNEL_ID if CHANNEL_ID else "FALTA")
     print("📦 RAINFOREST_API_KEY:", "CARGADO" if RAINFOREST_API_KEY else "FALTA")
 
-    asin_list = ["B07X1KT6LD"]  # ✅ ASIN válido de prueba
-
-    productos = []
-    for asin in asin_list:
-        info = get_product_info(asin)
-        if info:
-            productos.append((*info, asin))
-
-    if productos:
-        notify_channel(productos)
-    else:
-        print("❌ No se encontraron productos.")
+    try:
+        productos = search_amazon_products()
+        if productos:
+            notify_channel(productos)
+        else:
+            print("❌ No se encontraron productos.")
+    except Exception as e:
+        print("❌ Error general:", e)
