@@ -12,7 +12,7 @@ RAINFOREST_API_KEY = os.getenv("RAINFOREST_API_KEY")
 bot = telegram.Bot(token=TOKEN)
 
 def get_amazon_products():
-    asin_list = ["B09V3HN1XZ", "B09YVCDB7H", "B0C6VYG66P"]  # productos reales y en stock
+   asin_list = ["B09V3HN1XZ", "B09YVCDB7H", "B0C6VYG66P"]  # productos reales y en stock
     headers = {"Content-Type": "application/json"}
     products = []
 
