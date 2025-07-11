@@ -1,5 +1,4 @@
 import os
-import json
 import requests
 import telegram
 from dotenv import load_dotenv
@@ -25,52 +24,41 @@ def get_product_info(asin):
     try:
         response = requests.get(url, params=params, headers=headers, timeout=10)
         data = response.json()
-        
+
         title = data.get("product", {}).get("title")
         price = data.get("product", {}).get("buybox_winner", {}).get("price", {}).get("value")
-        link = f"https://www.amazon.es/dp/{asin}"
-        
+
         if title and price:
-            return {
-                "title": title,
-                "price": price,
-                "url": link
-            }
+            return title, price
         else:
             print(f"❌ No se encontró precio o título para {asin}")
             return None
-
     except Exception as e:
-        print(f"❌ Error al obtener info de {asin}: {e}")
+        print(f"❌ Error al obtener info para {asin}: {e}")
         return None
 
 def notify_channel(products):
-    for product in products:
-        title = product["title"]
-        price = product["price"]
-        url = product["url"]
-
-        message = f"🔥 OFERTA: {title}\n💰 Precio: {price} €\n🔗 Enlace: {url}"
-
+    for title, price, asin in products:
+        message = f"🔥 OFERTA: {title}\n💰 Precio: {price} €\n🔗 Enlace: https://www.amazon.es/dp/{asin}"
         try:
             bot.send_message(chat_id=CHANNEL_ID, text=message)
         except Exception as e:
             print(f"❌ Error al enviar mensaje: {e}")
 
 if __name__ == "__main__":
-    print("📦 BOT_TOKEN:", "CARGADO" if TOKEN else "FALTA")
+    print("\n📦 BOT_TOKEN:", "CARGADO" if TOKEN else "FALTA")
     print("📦 CHANNEL_ID:", CHANNEL_ID if CHANNEL_ID else "FALTA")
     print("📦 RAINFOREST_API_KEY:", "CARGADO" if RAINFOREST_API_KEY else "FALTA")
 
-    asin_list = ["B09YVCDB7H", "B0C6VYG66P", "B0C2X8TVVV"]
-    ofertas = []
+    asin_list = ["B07X1KT6LD"]  # ✅ ASIN válido de prueba
 
+    productos = []
     for asin in asin_list:
         info = get_product_info(asin)
         if info:
-            ofertas.append(info)
+            productos.append((*info, asin))
 
-    if ofertas:
-        notify_channel(ofertas)
+    if productos:
+        notify_channel(productos)
     else:
         print("❌ No se encontraron productos.")
