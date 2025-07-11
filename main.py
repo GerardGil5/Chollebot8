@@ -38,7 +38,7 @@ def scrape_amazon():
 
 def notify_channel(products):
     for title, price, url in products:
-        message = f"🔥 OFERTA: {title}
+        message = f"🔥 OFERTA: {title}\n💰 Precio: {price}\n🔗 Enlace: {link}"
 💰 Precio: {price} €
 🔗 {url}"
         try:
