@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import json
 import requests
@@ -38,9 +39,7 @@ def scrape_amazon():
 
 def notify_channel(products):
     for title, price, url in products:
-        message = f"🔥 OFERTA: {title}\n💰 Precio: {price}\n🔗 Enlace: {link}"
-💰 Precio: {price} €
-🔗 {url}"
+        message = f"🔥 OFERTA: {title}\n💰 Precio: {price} €\n🔗 Enlace: {url}"
         try:
             bot.send_message(chat_id=CHANNEL_ID, text=message)
         except Exception as e:
